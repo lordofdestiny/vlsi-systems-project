@@ -19,7 +19,7 @@ SIMUL_IS_QUESTA_USED = 0
 # C:\\"Program Files"\\altera\\13.1\\modelsim_ase\\win32aloem\\ 
 # C:\\"Program Files"\\questasim64_10.4c\\win64\\ 
 # C:\\Program1\\questasim64_10.7c\\win64\\ 
-SIMUL_TOOL_EXE_DIR_PATH = C:\\"Program Files"\\altera\\13.1\\modelsim_ase\\win32aloem\\
+SIMUL_TOOL_EXE_DIR_PATH = D:\\altera\\13.1\\modelsim_ase\\win32aloem\\
 
 # DE0_TOP (CycloneIII)
 # DE0_CV_TOP (CycloneV)

@@ -1,5 +1,9 @@
 output.txt
 tooling/waveform.wlf
-tooling/vlog_complete.log
 tooling/transcript
 tooling/work
+DE0_TOP.*
+!DEO0_TOP.v
+*.log
+*.chg
+*.dat

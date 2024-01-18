@@ -134,8 +134,7 @@ module cpu
         .sl(), .il()
     );
 
-    reg mar_ld;
-    reg mar_inc;
+    reg mar_ld, mar_inc;
     reg [ADDR_WIDTH-1:0] mar_in;
     register #(ADDR_WIDTH) mar_reg(
         .clk(clk), .rst_n(rst_n),
@@ -195,6 +194,20 @@ module cpu
         .sr(), .ir(),
         .sl(), .il()
     );
+    
+    /* OUTPUT REGISTER */
+    reg out_cl, out_ld;
+    reg [DATA_WIDTH-1:0] out_in;
+    register #(DATA_WIDTH) out_reg(
+        .clk(clk), .rst_n(rst_n),
+        .cl(out_cl),
+        .ld(out_ld), .in(out_in),
+        .out(out),
+        .inc(), .dec(),
+        .sr(), .ir(),
+        .sl(), .il()
+    );
+        
 
     /* INSTRUCTION DECODING */
     reg two_word_instruction;
@@ -269,19 +282,26 @@ module cpu
         op2_addr_ld = 0;
         op3_addr_ld = 0;
 
+        /* OUTPUT REGISTER*/
+        out_cl = 0;
+        out_ld = 0;
+        out_in = 0;
+
         case (state_reg)
             /* INITIALIZATION STATES*/
             state_init: begin
                 // Reset pc to 0x08
                 pc_ld = 1'b1;
                 pc_in = {{(DATA_WIDTH-4){1'b0}}, 4'h8};
-                // Reset sp to last address
+                // Reset sp to last address in memory
                 sp_ld = 1'b1;
                 sp_in = {ADDR_WIDTH{1'b1}};
                 // Reset ir to 0
                 ir_cl = 1'b1;
                 // Reset acc to 0
                 acc_cl = 1'b1;
+                // Clear output register
+                out_cl = 1'b1;
                 // Go to next state
                 state_next = state_reg + 1;
             end

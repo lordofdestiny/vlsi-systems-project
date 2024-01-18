@@ -56,8 +56,8 @@ module top
     
     initial begin
         $readmemh("./init_memory.hex", memory0.mem);
-        $monitor("mem[1]", memory0.mem[1]);
-        $monitor("CPU_OUT", cpu_out);
+        $monitor("%4t -> mem[1]", memory0.mem[1]);
+        $monitor("%4t -> CPU_OUT = %4h", $time, cpu_out);
         
         clk = 0;
         rst_n = 0;

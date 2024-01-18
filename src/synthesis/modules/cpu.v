@@ -432,12 +432,11 @@ module cpu
             state_exec_out_1: state_next = state_exec_stop; // All instructions stop for now
             state_exec_done: state_next = state_read_high_ir_1;
             state_exec_stop: begin
-                $display("go to stop state");
                 state_next = state_exec_stop; // Loop the stop state
                 #100 $finish;
             end
             default:begin
-                $display("error (invalid state): go to stop state");
+                $display("error - invalid state (%2h): go to stop state", state_reg);
                 state_next = state_exec_stop;
             end
         endcase

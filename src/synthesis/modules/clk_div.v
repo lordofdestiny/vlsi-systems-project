@@ -7,7 +7,9 @@ module clk_div
     output out
 );
     reg out_reg;
-    assign out = out_reg;
+    assign out = DIVISOR > 1
+        ? out_reg
+        : clk;
 
     integer counter;
 
@@ -17,10 +19,10 @@ module clk_div
             out_reg <= 1'b0;
         end else begin
             counter <= counter + 1;
-            if (counter == DIVISOR - 1 ) begin
+            if( counter >= DIVISOR - 1) begin
                 counter <= 0;
-                out_reg <= ~out_reg;
             end
+            out_reg <= (counter < DIVISOR / 2) ? 1'b1: 1'b0;
         end
     end
 

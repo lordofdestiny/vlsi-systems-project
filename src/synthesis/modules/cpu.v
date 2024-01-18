@@ -248,16 +248,37 @@ module cpu
         endcase
     end
 
-    initial begin
-        // $monitor("%0t -> PC = %2h", $time, pc);
-        // $monitor("%0t -> SP = %2h", $time, sp);
-        // $monitor("%0t -> IR = %6h", $time, ir);
-        $monitor("%4t-> (IR=%8h) op: %04b; A = %04b; B = %04b, C = %04b, DATA = %4h",
-         $time, ir, ir_opcode, ir_operand_1, ir_operand_2, ir_operand_3, ir_data);
-        // $monitor("%0t -> ACC = %5d", $time, acc);
-        // $monitor("%0t -> MAR = %2h", $time, mem_addr);
-        // $monitor("%0t -> MDR = %6h", $time, mem_data);
-        // $monitor("%0t -> MEM_IN = %6h", $time, mem_in);
-        // $monitor("%0t -> state = %2h", $time, state_reg);
+    always @(*) begin
+        $strobe("%4t -> PC = %6b", $time, pc);
     end
+
+    always @(*) begin
+        $strobe("%4t -> SP = %6b", $time, sp);
+    end
+
+    always @(*) begin
+        $strobe("%4t -> op = %04b; A = %04b; B = %04b, C = %04b, DATA = %4h",
+            $time, ir_opcode, ir_operand_1, ir_operand_2, ir_operand_3, ir_data);    
+    end
+
+    always @(*) begin
+        $strobe("%4t -> ACC = %4h", $time, acc);
+    end
+
+    always @(*) begin
+        $strobe("%4t -> MAR = %6b", $time, mem_addr);
+    end
+
+    always @(*) begin
+        $strobe("%4t -> MDR = %4h", $time, mem_data);
+    end
+
+    always @(*) begin
+        $strobe("%4t -> MEM_IN = %4h", $time, mem_in);
+    end
+
+    always @(*) begin
+        $strobe("%4t -> state = %2h", $time, state_reg);
+    end
+
 endmodule

@@ -13,7 +13,7 @@ module top
     wire clk_div;
     // assign clk_div = clk;
     clk_div #(
-        .DIVISOR(2)
+        .DIVISOR(1)
     ) clk_div0(
         .clk(clk),
         .rst_n(rst_n),
@@ -36,7 +36,7 @@ module top
         .mem_we(cpu_mem_we_out),
         .mem_addr(cpu_mem_addr_out),
         .mem_data(cpu_mem_data_out),
-        .in(16'b1001),
+        .in(16'b1000),
         .out(cpu_out),
         .pc(),
         .sp()
@@ -57,10 +57,10 @@ module top
     always @(*) begin
         $display("%4t -> CPU_OUT = %4h", $time, cpu_out);
     end
-    
+
     initial begin
         $readmemh("./init_memory.hex", memory0.mem);
-        $monitor("%4t -> mem[1] = %4h", $time, memory0.mem[1]);
+        $monitor("%4t -> mem[1] = %4h; mem[2] = %4h", $time, memory0.mem[1], memory0.mem[2]);
         
         clk = 0;
         rst_n = 0;

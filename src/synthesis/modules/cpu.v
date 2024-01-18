@@ -43,6 +43,13 @@ module cpu
     localparam state_ld_indirect_op3_4  = 8'h1c;
 
     localparam state_exec_mov           = 8'h40;
+    localparam state_exec_mov_read_op_1 = 8'h41;
+    localparam state_exec_mov_read_op_2 = 8'h42;
+    localparam state_exec_mov_read_op_3 = 8'h43;
+    localparam state_exec_mov_write_1   = 8'h44;
+    localparam state_exec_mov_write_2   = 8'h45;
+    localparam state_exec_mov_write_3   = 8'h46;
+    localparam state_exec_mov_write_4   = 8'h47;
     
     localparam state_exec_alu_1         = 8'h50;
     
@@ -453,7 +460,52 @@ module cpu
                 state_next = instruction_state;
             end
             /* INSTRUCTION EXEC STATES */
-            state_exec_mov: state_next = state_exec_stop; // All instructions stop for now
+            state_exec_mov: begin
+                if(ir_operand_3 == 4'b0000) begin
+                    state_next = state_exec_mov_read_op_1;
+                end
+                else if(ir_operand_3 == 4'b1000) begin
+                    mdr_ld = 1;
+                    mdr_in = ir_data;
+                    state_next = state_exec_mov_write_1;
+                end else begin
+                    $display("error - invalid mov type (%2h): go to stop state", state_reg);
+                    state_next = state_exec_stop;
+                end
+            end
+            state_exec_mov_read_op_1: begin
+                $display("I need to read from memory first");
+                mar_ld = 1;
+                mar_in = ir_indirect_op2
+                    ? op2_addr
+                    : ir_op2_addr
+                    ;
+                // Go to the next state
+                state_next = state_reg + 1; 
+            end
+            state_exec_mov_read_op_2: begin
+                // Wait a single cycle for memory data
+                state_next = state_reg + 1;
+            end
+            state_exec_mov_read_op_3: begin
+                mdr_ld = 1;
+                state_next = state_exec_mov_write_1;
+            end
+            state_exec_mov_write_1: begin
+                $display("Now im gonna write it to the destination");
+                mar_ld = 1;
+                mar_in = ir_indirect_op1
+                    ? op1_addr
+                    : ir_op1_addr
+                    ;
+                // Go to the next state
+                state_next = state_reg + 1;
+            end
+            state_exec_mov_write_2: begin
+                mem_we = 1;
+                // Wait a single cycle for memory data
+                state_next = state_exec_done;
+            end
             state_exec_alu_1: state_next = state_exec_stop; // All instructions stop for now
             state_exec_in_1: begin
                 mar_ld = 1;

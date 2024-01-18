@@ -53,11 +53,14 @@ module top
         .data(cpu_mem_data_out),
         .out(cpu_mem_data_in)
     );
+
+    always @(*) begin
+        $display("%4t -> CPU_OUT = %4h", $time, cpu_out);
+    end
     
     initial begin
         $readmemh("./init_memory.hex", memory0.mem);
-        $monitor("%4t -> mem[1]", memory0.mem[1]);
-        $monitor("%4t -> CPU_OUT = %4h", $time, cpu_out);
+        $monitor("%4t -> mem[1] = %4h", $time, memory0.mem[1]);
         
         clk = 0;
         rst_n = 0;

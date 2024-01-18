@@ -5,7 +5,6 @@ module top
     parameter ADDR_WIDTH = 6,
     parameter DATA_WIDTH = 16 
 ) (
-    
 );
     reg clk, rst_n;
 
@@ -23,7 +22,7 @@ module top
         .mem_we(cpu_mem_we_out),
         .mem_addr(cpu_mem_addr_out),
         .mem_data(cpu_mem_data_out),
-        .in(),
+        .in(16'b1001),
         .out(),
         .pc(),
         .sp()
@@ -40,9 +39,10 @@ module top
         .data(cpu_mem_data_out),
         .out(cpu_mem_data_in)
     );
-
+    
     initial begin
         $readmemh("./init_memory.hex", memory0.mem);
+        $monitor("mem[1]", memory0.mem[1]);
 
         clk = 0;
         rst_n = 0;

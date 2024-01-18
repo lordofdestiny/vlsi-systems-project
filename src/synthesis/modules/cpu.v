@@ -30,14 +30,17 @@ module cpu
     localparam state_ld_indirect_op1_1  = 8'h11;
     localparam state_ld_indirect_op1_2  = 8'h12;
     localparam state_ld_indirect_op1_3  = 8'h13;
+    localparam state_ld_indirect_op1_4  = 8'h14;
 
-    localparam state_ld_indirect_op2_1  = 8'h14;
-    localparam state_ld_indirect_op2_2  = 8'h15;
-    localparam state_ld_indirect_op2_3  = 8'h16;
+    localparam state_ld_indirect_op2_1  = 8'h15;
+    localparam state_ld_indirect_op2_2  = 8'h16;
+    localparam state_ld_indirect_op2_3  = 8'h17;
+    localparam state_ld_indirect_op2_4  = 8'h18;
 
-    localparam state_ld_indirect_op3_1  = 8'h17;
-    localparam state_ld_indirect_op3_2  = 8'h18;
-    localparam state_ld_indirect_op3_3  = 8'h19;
+    localparam state_ld_indirect_op3_1  = 8'h19;
+    localparam state_ld_indirect_op3_2  = 8'h1a;
+    localparam state_ld_indirect_op3_3  = 8'h1b;
+    localparam state_ld_indirect_op3_4  = 8'h1c;
 
     localparam state_exec_mov_short     = 8'h40;
     localparam state_exec_mov_long      = 8'h50;
@@ -48,6 +51,10 @@ module cpu
     localparam state_exec_in_2          = 8'h71;
     
     localparam state_exec_out_1         = 8'h80;
+    localparam state_exec_out_2         = 8'h81;
+    localparam state_exec_out_3         = 8'h82;
+    localparam state_exec_out_4         = 8'h83;
+    localparam state_exec_out_5         = 8'h84;
 
     localparam state_exec_done          = 8'ha0;
 
@@ -96,21 +103,29 @@ module cpu
     wire [31:0] ir_in;
     reg [15:0] ir_in_high, ir_in_low;
     assign ir_in = {ir_in_high, ir_in_low};
+    
     wire [31:0] ir;
     wire [15:0] ir_high, ir_low;
+    assign {ir_high, ir_low} = ir;
+
     wire [3:0] ir_opcode;
     wire [3:0] ir_operand_1, ir_operand_2, ir_operand_3;
-    wire ir_indirect_op1, ir_indirect_op2, ir_indirect_op3;
     wire [15:0] ir_data; 
     assign {
         ir_opcode,
         ir_operand_1, ir_operand_2, ir_operand_3,
         ir_data
     } =  ir;
+    
+    wire ir_indirect_op1, ir_indirect_op2, ir_indirect_op3;
     assign ir_indirect_op1 = ir_operand_1[3];
     assign ir_indirect_op2 = ir_operand_2[3];
     assign ir_indirect_op3 = ir_operand_3[3];
-    assign {ir_high, ir_low} = ir;
+    
+    wire [ADDR_WIDTH-1:0] ir_op1_addr, ir_op2_addr, ir_op3_addr;
+    assign ir_op1_addr = {{(ADDR_WIDTH - 3){1'b0}}, ir_operand_1[2:0]}; 
+    assign ir_op2_addr = {{(ADDR_WIDTH - 3){1'b0}}, ir_operand_2[2:0]}; 
+    assign ir_op3_addr = {{(ADDR_WIDTH - 3){1'b0}}, ir_operand_3[2:0]}; 
 
     register #(32) ir_reg(
         .clk(clk), .rst_n(rst_n),
@@ -285,7 +300,7 @@ module cpu
         /* OUTPUT REGISTER*/
         out_cl = 0;
         out_ld = 0;
-        out_in = 0;
+        out_in = mem_data;
 
         case (state_reg)
             /* INITIALIZATION STATES*/
@@ -302,14 +317,14 @@ module cpu
                 acc_cl = 1'b1;
                 // Clear output register
                 out_cl = 1'b1;
-                // Go to next state
+                // Go to the next state
                 state_next = state_reg + 1;
             end
             /* INSTRUCTION FETCH STATES*/
             state_read_high_ir_1: begin
                 pc_inc = 1;
                 mar_ld = 1;
-                // Go to next state
+                // Go to the next state
                 state_next = state_reg + 1;
             end
             state_read_high_ir_2: begin
@@ -318,7 +333,7 @@ module cpu
             end
             state_read_high_ir_3: begin
                 mdr_ld = 1;
-                // Go to next state
+                // Go to the next state
                 state_next = state_reg + 1;
             end
             state_read_high_ir_4: begin
@@ -336,7 +351,7 @@ module cpu
             state_read_low_ir_1: begin
                 pc_inc = 1;
                 mar_ld = 1;
-                // Go to next state
+                // Go to the next state
                 state_next = state_reg + 1;
             end
             state_read_low_ir_2: begin
@@ -345,7 +360,7 @@ module cpu
             end
             state_read_low_ir_3: begin
                 mdr_ld = 1;
-                // Go to next state
+                // Go to the next state
                 state_next = state_reg + 1;
             end
             state_read_low_ir_4:begin
@@ -374,8 +389,8 @@ module cpu
             end
             state_ld_indirect_op1_1: begin
                 mar_ld = 1;
-                mar_in = {{3{1'b0}}, ir_operand_1[2:0]};
-                // Go to next state
+                mar_in = ir_op1_addr;
+                // Go to the next state
                 state_next = state_reg + 1; 
             end
             state_ld_indirect_op1_2: begin
@@ -383,6 +398,11 @@ module cpu
                 state_next = state_reg + 1;
             end
             state_ld_indirect_op1_3: begin
+                mdr_ld = 1;
+                // Go to the next state
+                state_next = state_reg + 1; 
+            end
+            state_ld_indirect_op1_4: begin
                 op1_addr_ld = 1;
                 if(ir_indirect_op2) begin
                     state_next = state_ld_indirect_op2_1;
@@ -394,11 +414,10 @@ module cpu
                     state_next = instruction_state;
                 end 
             end
-
             state_ld_indirect_op2_1: begin
                 mar_ld = 1;
-                mar_in = {{3{1'b0}}, ir_operand_2[2:0]};
-                // Go to next state
+                mar_in = ir_op2_addr;
+                // Go to the next state
                 state_next = state_reg + 1; 
             end
             state_ld_indirect_op2_2: begin
@@ -406,7 +425,12 @@ module cpu
                 state_next = state_reg + 1;
             end
             state_ld_indirect_op2_3: begin
-                op1_addr_ld = 1;
+                mdr_ld = 1;
+                // Go to the next state
+                state_next = state_reg + 1; 
+            end
+            state_ld_indirect_op2_4: begin
+                op2_addr_ld = 1;
                 if(ir_indirect_op3 && ir_opcode != instr_MOV) begin
                     state_next = state_ld_indirect_op3_1;
                 end
@@ -417,8 +441,8 @@ module cpu
 
             state_ld_indirect_op3_1: begin
                 mar_ld = 1;
-                mar_in = {{3{1'b0}}, ir_operand_3[2:0]};
-                // Go to next state
+                mar_in = ir_op3_addr;
+                // Go to the next state
                 state_next = state_reg + 1; 
             end
             state_ld_indirect_op3_2: begin
@@ -426,21 +450,24 @@ module cpu
                 state_next = state_reg + 1;
             end
             state_ld_indirect_op3_3: begin
-                op1_addr_ld = 1;
+                mdr_ld = 1;
+                // Go to the next state
+                state_next = state_reg + 1; 
+            end
+            state_ld_indirect_op3_4: begin
+                op3_addr_ld = 1;
                 state_next = instruction_state;
             end
-
             /* INSTRUCTION EXEC STATES */
             state_exec_mov_short: state_next = state_exec_stop; // All instructions stop for now
             state_exec_mov_long: state_next = state_exec_stop; // All instructions stop for now
             state_exec_alu_1: state_next = state_exec_stop; // All instructions stop for now
             state_exec_in_1: begin
                 mar_ld = 1;
-                if(ir_indirect_op1) begin 
-                    mar_in = op1_addr;
-                end else begin
-                    mar_in = {{3{1'b0}}, ir_operand_1[2:0]};
-                end
+                mar_in = ir_indirect_op1
+                    ? op1_addr
+                    : ir_op1_addr
+                    ;
                 mdr_ld = 1;
                 mdr_in = in;
                 state_next = state_reg + 1;
@@ -449,7 +476,28 @@ module cpu
                 mem_we = 1;
                 state_next = state_exec_done;
             end
-            state_exec_out_1: state_next = state_exec_stop; // All instructions stop for now
+            state_exec_out_1: begin
+                mar_ld = 1;
+                mar_in = ir_indirect_op1
+                    ? op1_addr
+                    : ir_op1_addr
+                    ;
+                // Go to the next state
+                state_next = state_reg + 1;
+            end
+            state_exec_out_2: begin
+                // Wait a single cycle for memory data
+                state_next = state_reg + 1;
+            end
+            state_exec_out_3: begin
+                mdr_ld = 1;
+                // Go to the next state
+                state_next = state_reg + 1;
+            end
+            state_exec_out_4: begin
+                out_ld = 1;
+                state_next = state_exec_done;
+            end
             state_exec_done: state_next = state_read_high_ir_1;
             state_exec_stop: begin
                 state_next = state_exec_stop; // Loop the stop state
@@ -499,10 +547,10 @@ module cpu
     end
 
     always @(*) begin
-        $strobe("%4t -> op_addr(1) = %6b", $time, op3_addr);
+        $strobe("%4t -> op_addr(1) = %6b", $time, op1_addr);
     end
     always @(*) begin
-        $strobe("%4t -> op_addr(2) = %6b", $time, op3_addr);
+        $strobe("%4t -> op_addr(2) = %6b", $time, op2_addr);
     end
     always @(*) begin
         $strobe("%4t -> op_addr(3) = %6b", $time, op3_addr);

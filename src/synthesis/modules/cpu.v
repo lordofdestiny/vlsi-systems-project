@@ -77,7 +77,11 @@ module cpu
     wire [3:0] ir_operand_2; 
     wire [3:0] ir_operand_3;
     wire [15:0] ir_data; 
-    assign {ir_opcode, ir_operand_1, ir_operand_2, ir_operand_3, ir_data} =  ir;
+    assign {
+        ir_opcode,
+        ir_operand_1, ir_operand_2, ir_operand_3,
+        ir_data
+    } =  ir;
     assign {ir_high, ir_low} = ir;
 
     register #(32) ir_reg(
@@ -183,8 +187,7 @@ module cpu
                 // Reset ir to 0
                 ir_cl = 1'b1;
                 // Reset acc to 0
-                acc_cl =1'b1;
-
+                acc_cl = 1'b1;
                 // Go to next state
                 state_next = state_reg + 1;
             end
@@ -248,6 +251,7 @@ module cpu
         endcase
     end
 
+    /* LOGGING */
     always @(*) begin
         $strobe("%4t -> PC = %6b", $time, pc);
     end

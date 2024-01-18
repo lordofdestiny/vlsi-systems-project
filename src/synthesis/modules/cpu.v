@@ -25,7 +25,7 @@ module cpu
     localparam state_read_low_ir_2      = 8'h07;
     localparam state_read_low_ir_3      = 8'h08;
     localparam state_read_low_ir_4      = 8'h09;
-    localparam state_work               = 8'h0a;
+    localparam state_decode             = 8'h0a;
 
     /* INSTRUCTION OPCODES */
     localparam instr_MOV    = 4'b000; // 1 or 2 Bytes
@@ -213,7 +213,7 @@ module cpu
             state_read_high_ir_5: begin
                 state_next = two_word_instruction
                     ? state_reg + 1 // Read next word into IR
-                    : state_work // Go to the decode state
+                    : state_decode // Go to the decode state
                     ;
             end
             state_read_low_ir_1: begin
@@ -235,15 +235,15 @@ module cpu
                 ir_ld = 1;
                 ir_in_high = ir_high;
                 ir_in_low = mem_data;
-                state_next = state_work;
+                state_next = state_decode;
             end
-            state_work: begin
+            state_decode: begin
                 #5 $finish;
             end
 
             default:begin
                 $display("go to error state");
-                state_next = state_work;
+                state_next = state_decode;
             end
         endcase
     end

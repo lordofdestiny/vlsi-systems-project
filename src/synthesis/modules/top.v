@@ -5,25 +5,39 @@ module top
     parameter ADDR_WIDTH = 6,
     parameter DATA_WIDTH = 16 
 ) (
+    // input clk
+    // input rst_n
 );
-    reg clk, rst_n;
+    reg clk;
+    reg rst_n;
+    wire clk_div;
+    // assign clk_div = clk;
+    clk_div #(
+        .DIVISOR(2)
+    ) clk_div0(
+        .clk(clk),
+        .rst_n(rst_n),
+        .out(clk_div)
+    );
+
 
     wire cpu_mem_we_out;
     wire [ADDR_WIDTH-1:0] cpu_mem_addr_out;
     wire [DATA_WIDTH-1:0] cpu_mem_data_out;
     wire [DATA_WIDTH-1:0] cpu_mem_data_in;
+    wire [DATA_WIDTH-1:0] cpu_out;
 
     cpu #(
         .ADDR_WIDTH(ADDR_WIDTH),
         .DATA_WIDTH(DATA_WIDTH)
     ) cpu0 (
-        .clk(clk), .rst_n(rst_n),
+        .clk(clk_div), .rst_n(rst_n),
         .mem_in(cpu_mem_data_in),
         .mem_we(cpu_mem_we_out),
         .mem_addr(cpu_mem_addr_out),
         .mem_data(cpu_mem_data_out),
         .in(16'b1001),
-        .out(),
+        .out(cpu_out),
         .pc(),
         .sp()
     );
@@ -33,7 +47,7 @@ module top
         .ADDR_WIDTH(ADDR_WIDTH),
         .DATA_WIDTH(DATA_WIDTH)
     )  memory0 (
-        .clk(clk),
+        .clk(clk_div),
         .we(cpu_mem_we_out),
         .addr(cpu_mem_addr_out),
         .data(cpu_mem_data_out),
@@ -43,11 +57,13 @@ module top
     initial begin
         $readmemh("./init_memory.hex", memory0.mem);
         $monitor("mem[1]", memory0.mem[1]);
-
+        $monitor("CPU_OUT", cpu_out);
+        
         clk = 0;
         rst_n = 0;
         #2 rst_n = 1;
     end
 
     always #5 clk = ~clk;
+    
 endmodule

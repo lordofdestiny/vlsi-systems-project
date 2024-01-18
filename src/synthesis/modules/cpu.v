@@ -42,19 +42,18 @@ module cpu
     localparam state_ld_indirect_op3_3  = 8'h1b;
     localparam state_ld_indirect_op3_4  = 8'h1c;
 
-    localparam state_exec_mov_short     = 8'h40;
-    localparam state_exec_mov_long      = 8'h50;
+    localparam state_exec_mov           = 8'h40;
     
-    localparam state_exec_alu_1         = 8'h60;
+    localparam state_exec_alu_1         = 8'h50;
     
-    localparam state_exec_in_1          = 8'h70;
-    localparam state_exec_in_2          = 8'h71;
+    localparam state_exec_in_1          = 8'h60;
+    localparam state_exec_in_2          = 8'h61;
     
-    localparam state_exec_out_1         = 8'h80;
-    localparam state_exec_out_2         = 8'h81;
-    localparam state_exec_out_3         = 8'h82;
-    localparam state_exec_out_4         = 8'h83;
-    localparam state_exec_out_5         = 8'h84;
+    localparam state_exec_out_1         = 8'h70;
+    localparam state_exec_out_2         = 8'h71;
+    localparam state_exec_out_3         = 8'h72;
+    localparam state_exec_out_4         = 8'h73;
+    localparam state_exec_out_5         = 8'h74;
 
     localparam state_exec_done          = 8'ha0;
 
@@ -236,12 +235,7 @@ module cpu
     reg [7:0] instruction_state;
     always @(*) begin
         case (ir_opcode)
-            instr_MOV: begin
-                instruction_state = two_word_instruction
-                    ? state_exec_mov_long // Write from IR into the memory at location of operand
-                    : state_exec_mov_short // Read from memory into mdr, then write to another location
-                    ;
-            end
+            instr_MOV: instruction_state = state_exec_mov;
             instr_ADD: instruction_state = state_exec_alu_1; 
             instr_SUB: instruction_state = state_exec_alu_1;
             instr_MUL: instruction_state = state_exec_alu_1;
@@ -459,8 +453,7 @@ module cpu
                 state_next = instruction_state;
             end
             /* INSTRUCTION EXEC STATES */
-            state_exec_mov_short: state_next = state_exec_stop; // All instructions stop for now
-            state_exec_mov_long: state_next = state_exec_stop; // All instructions stop for now
+            state_exec_mov: state_next = state_exec_stop; // All instructions stop for now
             state_exec_alu_1: state_next = state_exec_stop; // All instructions stop for now
             state_exec_in_1: begin
                 mar_ld = 1;

@@ -12,8 +12,6 @@ module top
     output [9:0] led,
     output [27:0] hex
 );
-    reg clk;
-    reg rst_n;
     wire clk_div;
     clk_div #(
         .DIVISOR(1)

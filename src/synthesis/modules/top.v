@@ -5,13 +5,10 @@ module top
     parameter ADDR_WIDTH = 6,
     parameter DATA_WIDTH = 16 
 ) (
-    // input clk
-    // input rst_n
 );
     reg clk;
     reg rst_n;
     wire clk_div;
-    // assign clk_div = clk;
     clk_div #(
         .DIVISOR(1)
     ) clk_div0(
@@ -19,7 +16,6 @@ module top
         .rst_n(rst_n),
         .out(clk_div)
     );
-
 
     wire cpu_mem_we_out;
     wire [ADDR_WIDTH-1:0] cpu_mem_addr_out;

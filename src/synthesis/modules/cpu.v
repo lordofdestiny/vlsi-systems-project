@@ -412,10 +412,12 @@ module cpu
                 else if(ir_indirect_op1) begin
                     state_next = state_ld_indirect_op1_1;
                 end
-                else if(ir_indirect_op2) begin
+                else if(ir_indirect_op2 &&
+                        ir_opcode != instr_IN && ir_opcode != instr_OUT) begin
                     state_next = state_ld_indirect_op2_1;
                 end
-                else if(ir_indirect_op3 && ir_opcode != instr_MOV) begin
+                else if(ir_indirect_op3 && ir_opcode != instr_MOV &&
+                        ir_opcode != instr_IN && ir_opcode != instr_OUT) begin
                     state_next = state_ld_indirect_op3_1;
                 end
                 else begin
@@ -439,10 +441,12 @@ module cpu
             end
             state_ld_indirect_op1_4: begin
                 op1_addr_ld = 1;
-                if(ir_indirect_op2) begin
+                if(ir_indirect_op2  &&
+                    ir_opcode != instr_IN && ir_opcode != instr_OUT) begin
                     state_next = state_ld_indirect_op2_1;
                 end
-                else if(ir_indirect_op3 && ir_opcode != instr_MOV) begin
+                else if(ir_indirect_op3 && ir_opcode != instr_MOV &&
+                        ir_opcode != instr_IN && ir_opcode != instr_OUT) begin
                     state_next = state_ld_indirect_op3_1;
                 end
                 else begin
@@ -466,7 +470,8 @@ module cpu
             end
             state_ld_indirect_op2_4: begin
                 op2_addr_ld = 1;
-                if(ir_indirect_op3 && ir_opcode != instr_MOV) begin
+                if(ir_indirect_op3 && ir_opcode != instr_MOV &&
+                    ir_opcode != instr_IN && ir_opcode != instr_OUT) begin
                     state_next = state_ld_indirect_op3_1;
                 end
                 else begin
@@ -643,7 +648,7 @@ module cpu
                 state_next = state_exec_stop; // Loop the stop state
                 #100 $finish;
             end
-            default:begin
+            default: begin
                 $display("error - invalid state (%2h): go to stop state", state_reg);
                 state_next = state_exec_stop;
             end
@@ -676,10 +681,6 @@ module cpu
 
     always @(*) begin
         $strobe("%4t -> MDR = %4h", $time, mem_data);
-    end
-
-    always @(*) begin
-        $strobe("%4t -> MEM_IN = %4h", $time, mem_in);
     end
 
     always @(*) begin

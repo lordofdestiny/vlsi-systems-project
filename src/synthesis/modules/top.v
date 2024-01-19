@@ -44,7 +44,7 @@ module top
         .mem_we(cpu_mem_we_out),
         .mem_addr(cpu_mem_addr_out),
         .mem_data(cpu_mem_data_out),
-        .in(cpu_in),
+        .in(sw[3:0]),
         .out(led[4:0]),
         .pc(cpu_pc_out),
         .sp(cpu_sp_out)

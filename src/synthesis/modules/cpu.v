@@ -655,8 +655,6 @@ module cpu
         endcase
     end
 
-    initial $monitor("Instruction state: %2h", instruction_state);
-
     /* LOGGING */
     always @(*) begin
         $strobe("%4t -> PC = %6b", $time, pc);

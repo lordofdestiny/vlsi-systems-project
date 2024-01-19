@@ -7,3 +7,5 @@ DE0_TOP.*
 *.log
 *.chg
 *.dat
+incremental_db
+db

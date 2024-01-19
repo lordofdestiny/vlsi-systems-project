@@ -5,12 +5,6 @@ module top
     parameter ADDR_WIDTH = 6,
     parameter DATA_WIDTH = 16 
 ) (
-    input clk,
-    input rst_n,
-    input[2:0] btn,
-    input [9:0] sw,
-    output [9:0] led,
-    output [27:0] hex
 );
     reg clk;
     reg rst_n;
@@ -28,12 +22,8 @@ module top
     wire [DATA_WIDTH-1:0] cpu_mem_data_out;
     wire [DATA_WIDTH-1:0] cpu_mem_data_in;
     wire [DATA_WIDTH-1:0] cpu_out;
-    wire [ADDR_WIDTH-1:0] cpu_pc_out;
-    wire [ADDR_WIDTH-1:0] cpu_sp_out;
 
-    // red i debounce vrv...
-    wire [DATA_WIDTH-1:0] cpu_in;
-
+    reg [DATA_WIDTH-1:0] cpu_in_test;
 
     cpu #(
         .ADDR_WIDTH(ADDR_WIDTH),
@@ -44,35 +34,10 @@ module top
         .mem_we(cpu_mem_we_out),
         .mem_addr(cpu_mem_addr_out),
         .mem_data(cpu_mem_data_out),
-        .in(cpu_in),
-        .out(led[4:0]),
-        .pc(cpu_pc_out),
-        .sp(cpu_sp_out)
-    );
-
-    wire [3:0] pc_tens, pc_ones;
-    bcd bcd_pc(
-        .in(cpu_pc_out),
-        .ones(pc_ones),
-        .tens(pc_tens)
-    );
-    ssd ssd_pc_tens(
-        .in(pc_tens), .out(hex[27:21])
-    );
-    ssd ssd_pc_ones(
-        .in(pc_ones), .out(hex[20:14])
-    );
-    wire [3:0] sp_tens, sp_ones;
-    bcd bcd_sp(
-        .in(cpu_sp_out),
-        .ones(sp_ones),
-        .tens(sp_tens)
-    );
-    ssd ssd_sp_tens(
-        .in(pc_tens), .out(hex[13:7])
-    );
-    ssd ssd_sp_ones(
-        .in(pc_ones), .out(hex[6:0])
+        .in(cpu_in_test),
+        .out(cpu_out),
+        .pc(),
+        .sp()
     );
 
     memory #(
@@ -86,5 +51,25 @@ module top
         .data(cpu_mem_data_out),
         .out(cpu_mem_data_in)
     );
+
+    always @(*) begin
+        $display("%4t -> CPU_OUT = %4h", $time, cpu_out);
+    end
+
+    initial begin
+        $readmemh("./init_memory.hex", memory0.mem);
+        $monitor("%4t -> mem[1] = %4h; mem[2] = %4h; mem[3] = %4h; mem[4] = %4h; mem[5] = %4h",
+            $time, memory0.mem[1], memory0.mem[2], memory0.mem[3], memory0.mem[4], memory0.mem[5]);
+        
+        clk = 0;
+        rst_n = 0;
+        cpu_in_test = 16'd8;
+        #2 rst_n = 1;
+    
+        #500 cpu_in_test = 16'd9;
+        #250 cpu_in_test = 16'd3;
+    end
+
+    always #5 clk = ~clk;
     
 endmodule

@@ -27,6 +27,8 @@ module top
     wire [DATA_WIDTH-1:0] cpu_mem_data_in;
     wire [DATA_WIDTH-1:0] cpu_out;
 
+    reg [DATA_WIDTH-1:0] cpu_in_test;
+
     cpu #(
         .ADDR_WIDTH(ADDR_WIDTH),
         .DATA_WIDTH(DATA_WIDTH)
@@ -36,7 +38,7 @@ module top
         .mem_we(cpu_mem_we_out),
         .mem_addr(cpu_mem_addr_out),
         .mem_data(cpu_mem_data_out),
-        .in(16'b1000),
+        .in(cpu_in_test),
         .out(cpu_out),
         .pc(),
         .sp()
@@ -60,11 +62,16 @@ module top
 
     initial begin
         $readmemh("./init_memory.hex", memory0.mem);
-        $monitor("%4t -> mem[1] = %4h; mem[2] = %4h", $time, memory0.mem[1], memory0.mem[2]);
+        $monitor("%4t -> mem[1] = %4h; mem[2] = %4h; mem[3] = %4h; mem[4] = %4h; mem[5] = %4h",
+            $time, memory0.mem[1], memory0.mem[2], memory0.mem[3], memory0.mem[4], memory0.mem[5]);
         
         clk = 0;
         rst_n = 0;
+        cpu_in_test = 16'd8;
         #2 rst_n = 1;
+    
+        #500 cpu_in_test = 16'd9;
+        #250 cpu_in_test = 16'd3;
     end
 
     always #5 clk = ~clk;

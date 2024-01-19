@@ -51,7 +51,16 @@ module cpu
     localparam state_exec_mov_write_3   = 8'h46;
     localparam state_exec_mov_write_4   = 8'h47;
     
-    localparam state_exec_alu_1         = 8'h50;
+    localparam state_exec_alu_ld_op2_1  = 8'h50; 
+    localparam state_exec_alu_ld_op2_2  = 8'h51; 
+    localparam state_exec_alu_ld_op2_3  = 8'h52; 
+    localparam state_exec_alu_ld_op2_4  = 8'h53;
+    localparam state_exec_alu_ld_op3_1  = 8'h54; 
+    localparam state_exec_alu_ld_op3_2  = 8'h55; 
+    localparam state_exec_alu_ld_op3_3  = 8'h56; 
+    localparam state_exec_alu_work      = 8'h57; 
+    localparam state_exec_alu_st_op1_1  = 8'h58; 
+    localparam state_exec_alu_st_op1_2  = 8'h59; 
     
     localparam state_exec_in_1          = 8'h60;
     localparam state_exec_in_2          = 8'h61;
@@ -143,13 +152,14 @@ module cpu
         .sl(), .il()
     );
 
-    reg acc_cl;
+    reg acc_ld, acc_cl;
+    reg [DATA_WIDTH-1:0] acc_in;
     wire [DATA_WIDTH-1:0] acc;
     register #(DATA_WIDTH) acc_reg(
         .clk(clk), .rst_n(rst_n),
         .cl(acc_cl),
+        .ld(acc_ld), .in(acc_in),
         .out(acc),
-        .ld(), .in(),
         .inc(), .dec(),
         .sr(), .ir(),
         .sl(), .il()
@@ -243,10 +253,10 @@ module cpu
     always @(*) begin
         case (ir_opcode)
             instr_MOV: instruction_state = state_exec_mov;
-            instr_ADD: instruction_state = state_exec_alu_1; 
-            instr_SUB: instruction_state = state_exec_alu_1;
-            instr_MUL: instruction_state = state_exec_alu_1;
-            instr_DIV: instruction_state = state_exec_alu_1;
+            instr_ADD: instruction_state = state_exec_alu_ld_op2_1; 
+            instr_SUB: instruction_state = state_exec_alu_ld_op2_1;
+            instr_MUL: instruction_state = state_exec_alu_ld_op2_1;
+            instr_DIV: instruction_state = state_exec_done; // Ignore instruction and go to next instruction
             instr_IN: instruction_state = state_exec_in_1;
             instr_OUT: instruction_state = state_exec_out_1;
             instr_STOP: instruction_state = state_exec_stop;
@@ -256,6 +266,28 @@ module cpu
             end
         endcase
     end
+
+    /* Generate ALU OC */
+    reg [2:0] alu_oc;
+    always @(*) begin
+        case(ir_opcode)
+            instr_ADD: alu_oc = 3'b000;
+            instr_SUB: alu_oc = 3'b001;
+            instr_MUL: alu_oc = 3'b010;
+            instr_DIV: alu_oc = 3'b011;
+            default: alu_oc = 3'b000; // Some default is needed
+        endcase
+    end
+
+    /* ALU */
+    wire [DATA_WIDTH-1:0] alu_out;
+    alu #(
+        .DATA_WIDTH(DATA_WIDTH)
+    ) alu0(
+        .oc(alu_oc),
+        .a(acc), .b(mem_data),
+        .f(alu_out)
+    );
 
     /* Implementation */
     always @(posedge clk, negedge rst_n) begin
@@ -285,6 +317,8 @@ module cpu
         
         /* ACC register*/
         acc_cl = 0;
+        acc_ld = 0;
+        acc_in = alu_out;
 
         /* MEMORY BUS CONTROL SIGNALS */
         mem_we = 0;
@@ -474,7 +508,6 @@ module cpu
                 end
             end
             state_exec_mov_read_op_1: begin
-                $display("I need to read from memory first");
                 mar_ld = 1;
                 mar_in = ir_indirect_op2
                     ? op2_addr
@@ -492,7 +525,6 @@ module cpu
                 state_next = state_exec_mov_write_1;
             end
             state_exec_mov_write_1: begin
-                $display("Now im gonna write it to the destination");
                 mar_ld = 1;
                 mar_in = ir_indirect_op1
                     ? op1_addr
@@ -506,7 +538,69 @@ module cpu
                 // Wait a single cycle for memory data
                 state_next = state_exec_done;
             end
-            state_exec_alu_1: state_next = state_exec_stop; // All instructions stop for now
+            state_exec_alu_ld_op2_1: begin
+                mar_ld = 1;
+                mar_in = ir_indirect_op2
+                    ? op2_addr
+                    : ir_op2_addr
+                    ;
+                // Go to the next state
+                state_next = state_reg + 1; 
+            end
+            state_exec_alu_ld_op2_2: begin
+                // Wait a single cycle for memory data
+                state_next = state_reg + 1;
+            end
+            state_exec_alu_ld_op2_3: begin
+                mdr_ld = 1;
+                // Go to the next state
+                state_next = state_reg + 1; 
+            end
+            state_exec_alu_ld_op2_4: begin
+                acc_ld = 1;
+                acc_in = mem_data;
+                // Go to the next state
+                state_next = state_reg + 1;
+            end
+            state_exec_alu_ld_op3_1: begin
+                mar_ld = 1;
+                mar_in = ir_indirect_op3
+                    ? op3_addr
+                    : ir_op3_addr
+                    ;
+                // Go to the next state
+                state_next = state_reg + 1;
+            end
+            state_exec_alu_ld_op3_2: begin
+                // Wait a single cycle for memory data
+                state_next = state_reg + 1;
+            end
+            state_exec_alu_ld_op3_3: begin
+                mdr_ld = 1;
+                // Go to the next state
+                state_next = state_reg + 1;
+            end
+            state_exec_alu_work: begin
+                acc_ld = 1;
+                // Go to the next state
+                state_next = state_reg + 1;
+            end
+            state_exec_alu_st_op1_1: begin
+                mar_ld = 1;
+                mar_in = ir_indirect_op1
+                    ? op1_addr
+                    : ir_op1_addr
+                    ;
+                mdr_ld = 1;
+                mdr_in = acc;
+                // Go to the next state
+                state_next = state_reg + 1;
+            end
+            state_exec_alu_st_op1_2: begin
+                mem_we = 1;
+                // Wait a single cycle for memory data
+                state_next = state_exec_done;
+            end
             state_exec_in_1: begin
                 mar_ld = 1;
                 mar_in = ir_indirect_op1
@@ -515,6 +609,7 @@ module cpu
                     ;
                 mdr_ld = 1;
                 mdr_in = in;
+                // Go to the next state
                 state_next = state_reg + 1;
             end
             state_exec_in_2: begin

@@ -73,7 +73,24 @@ module cpu
 
     localparam state_exec_done          = 8'ha0;
 
-    localparam state_exec_stop          = 8'hff;
+    localparam state_exec_stop          = 8'hf0;
+
+    localparam state_exec_stop_o_op1_1  = 8'hf1;
+    localparam state_exec_stop_o_op1_2  = 8'hf2;
+    localparam state_exec_stop_o_op1_3  = 8'hf3;
+    localparam state_exec_stop_o_op1_4  = 8'hf4;
+    
+    localparam state_exec_stop_o_op2_1  = 8'hf5;
+    localparam state_exec_stop_o_op2_2  = 8'hf6;
+    localparam state_exec_stop_o_op2_3  = 8'hf7;
+    localparam state_exec_stop_o_op2_4  = 8'hf8;
+    
+    localparam state_exec_stop_o_op3_1  = 8'hf9;
+    localparam state_exec_stop_o_op3_2  = 8'hfa;
+    localparam state_exec_stop_o_op3_3  = 8'hfb;
+    localparam state_exec_stop_o_op3_4  = 8'hfc;
+
+    localparam state_exec_stop_loop     = 8'hff;
 
     /* INSTRUCTION OPCODES */
     localparam instr_MOV    = 4'b0000; // 1 or 2 Bytes
@@ -253,7 +270,7 @@ module cpu
             instr_STOP: instruction_state = state_exec_stop;
             default: begin
                 $strobe("error (invalid opcode): go to stop state");
-                instruction_state = state_exec_stop;
+                instruction_state = state_exec_stop_loop;
             end
         endcase
     end
@@ -395,10 +412,7 @@ module cpu
             end
             /* INSTRUCTION DECODE STATES */
             state_decode: begin
-                if(ir_opcode == instr_STOP) begin
-                    state_next = instruction_state;
-                end
-                else if(ir_indirect_op1) begin
+                if(ir_indirect_op1) begin
                     state_next = state_ld_indirect_op1_1;
                 end
                 else if(ir_indirect_op2 &&
@@ -498,7 +512,7 @@ module cpu
                     state_next = state_exec_mov_write_1;
                 end else begin
                     $display("error - invalid mov type (%2h): go to stop state", state_reg);
-                    state_next = state_exec_stop;
+                    state_next = state_exec_stop_loop;
                 end
             end
             state_exec_mov_read_op_1: begin
@@ -634,7 +648,99 @@ module cpu
             end
             state_exec_done: state_next = state_read_high_ir_1;
             state_exec_stop: begin
-                state_next = state_exec_stop; // Loop the stop state
+                if(ir_operand_1 != 4'b000) begin
+                    state_next = state_exec_stop_o_op1_1;
+                end
+                else if(ir_operand_2 != 4'b0000) begin
+                    state_next = state_exec_stop_o_op2_1;
+                end
+                else if(ir_operand_3 != 4'b0000) begin
+                    state_next = state_exec_stop_o_op3_1;
+                end else begin
+                    state_next = state_exec_stop_loop;
+                end
+            end
+            state_exec_stop_o_op1_1: begin
+                mar_ld = 1;
+                mar_in = ir_indirect_op1
+                    ? op1_addr
+                    : ir_op1_addr
+                    ;
+                // Go to the next state
+                state_next = state_reg + 1;
+            end
+            state_exec_stop_o_op1_2: begin
+                // Wait a single cycle for memory data
+                state_next = state_reg + 1;
+            end
+            state_exec_stop_o_op1_3: begin
+                mdr_ld = 1;
+                // Go to the next state
+                state_next = state_reg + 1;
+            end
+            state_exec_stop_o_op1_4: begin
+                out_next = mem_data;
+                if(ir_operand_2 != 4'b0000) begin
+                    state_next = state_exec_stop_o_op2_1;
+                end
+                else if(ir_operand_3 != 4'b0000) begin
+                    state_next = state_exec_stop_o_op3_1;
+                end else begin
+                    state_next = state_exec_stop_loop;
+                end
+            end
+
+            state_exec_stop_o_op2_1:begin
+                mar_ld = 1;
+                mar_in = ir_indirect_op2
+                    ? op2_addr
+                    : ir_op2_addr
+                    ;
+                // Go to the next state
+                state_next = state_reg + 1;
+            end
+            state_exec_stop_o_op2_2: begin
+               // Wait a single cycle for memory data
+                state_next = state_reg + 1; 
+            end
+            state_exec_stop_o_op2_3: begin
+                mdr_ld = 1;
+                // Go to the next state
+                state_next = state_reg + 1;
+            end
+            state_exec_stop_o_op2_4: begin
+                out_next = mem_data;
+                if(ir_operand_3 != 4'b0000) begin
+                    state_next = state_exec_stop_o_op3_1;
+                end else begin
+                    state_next = state_exec_stop_loop;
+                end
+            end
+            state_exec_stop_o_op3_1: begin
+                mar_ld = 1;
+                mar_in = ir_indirect_op3
+                    ? op3_addr
+                    : ir_op3_addr
+                    ;
+                // Go to the next state
+                state_next = state_reg + 1;
+            end
+            state_exec_stop_o_op3_2: begin
+               // Wait a single cycle for memory data
+                state_next = state_reg + 1; 
+            end
+            state_exec_stop_o_op3_3: begin
+                mdr_ld = 1;
+                // Go to the next state
+                state_next = state_reg + 1;
+            end
+            state_exec_stop_o_op3_4: begin
+                out_next = mem_data;
+                state_next = state_exec_stop_loop; 
+            end
+
+            state_exec_stop_loop: begin
+                state_next = state_exec_stop_loop; // Loop the stop state
                 #100 $finish;
             end
             default: begin

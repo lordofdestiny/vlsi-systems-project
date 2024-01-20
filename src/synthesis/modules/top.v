@@ -48,18 +48,6 @@ module top
         .sp(cpu_sp_out)
     );
 
-    wire [3:0] pc_tens, pc_ones;
-    bcd bcd_pc(
-        .in(cpu_pc_out),
-        .ones(pc_ones),
-        .tens(pc_tens)
-    );
-    ssd ssd_pc_tens(
-        .in(pc_tens), .out(hex[27:21])
-    );
-    ssd ssd_pc_ones(
-        .in(pc_ones), .out(hex[20:14])
-    );
     wire [3:0] sp_tens, sp_ones;
     bcd bcd_sp(
         .in(cpu_sp_out),
@@ -67,9 +55,22 @@ module top
         .tens(sp_tens)
     );
     ssd ssd_sp_tens(
-        .in(pc_tens), .out(hex[13:7])
+        .in(sp_tens), .out(hex[27:21])
     );
     ssd ssd_sp_ones(
+        .in(sp_ones), .out(hex[20:14])
+    );
+
+    wire [3:0] pc_tens, pc_ones;
+    bcd bcd_pc(
+        .in(cpu_pc_out),
+        .ones(pc_ones),
+        .tens(pc_tens)
+    );
+    ssd ssd_pc_tens(
+        .in(pc_tens), .out(hex[13:7])
+    );
+    ssd ssd_pc_ones(
         .in(pc_ones), .out(hex[6:0])
     );
 

@@ -1,6 +1,6 @@
 module top
 #(
-    parameter DIVISOR = 50_000_00,
+    parameter DIVISOR = 50_000_000,
     parameter FILE_NAME = "mem_init.mif",
     parameter ADDR_WIDTH = 6,
     parameter DATA_WIDTH = 16 
@@ -13,8 +13,9 @@ module top
     output [27:0] hex
 );
     wire clk_div;
+    assign led[9] = clk_div;
     clk_div #(
-        .DIVISOR(1)
+        .DIVISOR(DIVISOR)
     ) clk_div0(
         .clk(clk),
         .rst_n(rst_n),

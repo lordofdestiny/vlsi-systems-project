@@ -217,6 +217,7 @@ module DE0_TOP
 		.DATA_WIDTH(16)
 	) top_inst (
 		.clk(CLOCK_50),
+		.rst_n(SW[9]),
 		.btn(~BUTTON[2:0]),
 		.sw(SW[9:0]),
 		.led(LEDG[9:0]),

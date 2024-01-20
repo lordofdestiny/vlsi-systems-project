@@ -2,28 +2,36 @@
 import uvm_pkg::*;
 
 // Sequence Item
-class reg8_item extends uvm_sequence_item;
+class register_item extends uvm_sequence_item;
 
-	rand bit ld;
-	rand bit inc;
-	rand bit [7:0] in;
-	bit [7:0] out;
+	rand bit cl, ld;
+	rand bit [3:0] in;
+	rand bit inc, dec;
+	rand bit sr, ir;
+	rand bit sl, il;
+	bit [3:0] out;
 	
-	`uvm_object_utils_begin(reg8_item)
-		`uvm_field_int(ld, UVM_DEFAULT)
+	`uvm_object_utils_begin(register_item)
+		`uvm_field_int(cl, UVM_DEFAULT | UVM_BIN)
+		`uvm_field_int(ld, UVM_DEFAULT | UVM_BIN)
+		`uvm_field_int(in, UVM_DEFAULT)
 		`uvm_field_int(inc, UVM_DEFAULT | UVM_BIN)
-		`uvm_field_int(in, UVM_ALL_ON)
-		`uvm_field_int(out, UVM_NOPRINT)
+		`uvm_field_int(dec, UVM_DEFAULT | UVM_BIN)
+		`uvm_field_int(sr, UVM_DEFAULT | UVM_BIN)
+		`uvm_field_int(ir, UVM_DEFAULT | UVM_BIN)
+		`uvm_field_int(sl, UVM_DEFAULT | UVM_BIN)
+		`uvm_field_int(il, UVM_DEFAULT | UVM_BIN)
+		`uvm_field_int(out, UVM_DEFAULT)
 	`uvm_object_utils_end
 	
-	function new(string name = "reg8_item");
+	function new(string name = "register_item");
 		super.new(name);
 	endfunction
 	
 	virtual function string my_print();
 		return $sformatf(
-			"ld = %1b inc = %1b in = %8b out = %8b",
-			ld, inc, in, out
+			"cl = %1b ld = %1b in = %4b inc = %1b dec = %1b sr = %1b ir = %1b sl = %1b il = %1b out = %4b",
+			cl, ld, in, inc, dec, sr, ir, sl, il, out
 		);
 	endfunction
 
@@ -38,11 +46,11 @@ class generator extends uvm_sequence;
 		super.new(name);
 	endfunction
 	
-	int num = 20;
+	int num = 100;
 	
 	virtual task body();
 		for (int i = 0; i < num; i++) begin
-			reg8_item item = reg8_item::type_id::create("item");
+			register_item item = register_item::type_id::create("item");
 			start_item(item);
 			item.randomize();
 			`uvm_info("Generator", $sformatf("Item %0d/%0d created", i + 1, num), UVM_LOW)
@@ -54,7 +62,7 @@ class generator extends uvm_sequence;
 endclass
 
 // Driver
-class driver extends uvm_driver #(reg8_item);
+class driver extends uvm_driver #(register_item);
 	
 	`uvm_component_utils(driver)
 	
@@ -62,23 +70,28 @@ class driver extends uvm_driver #(reg8_item);
 		super.new(name, parent);
 	endfunction
 	
-	virtual reg8_if vif;
+	virtual register_if vif;
 	
 	virtual function void build_phase(uvm_phase phase);
 		super.build_phase(phase);
-		if (!uvm_config_db#(virtual reg8_if)::get(this, "", "reg8_vif", vif))
+		if (!uvm_config_db#(virtual register_if)::get(this, "", "reg8_vif", vif))
 			`uvm_fatal("Driver", "No interface.")
 	endfunction
 	
 	virtual task run_phase(uvm_phase phase);
 		super.run_phase(phase);
 		forever begin
-			reg8_item item;
+			register_item item;
 			seq_item_port.get_next_item(item);
 			`uvm_info("Driver", $sformatf("%s", item.my_print()), UVM_LOW)
+			vif.cl <= item.cl;
 			vif.ld <= item.ld;
-			vif.inc <= item.inc;
 			vif.in <= item.in;
+			vif.inc <= item.inc;
+			vif.sr <= item.sr;
+			vif.ir <= item.ir;
+			vif.sl <= item.sl;
+			vif.il <= item.il;
 			@(posedge vif.clk);
 			seq_item_port.item_done();
 		end
@@ -96,12 +109,12 @@ class monitor extends uvm_monitor;
 		super.new(name, parent);
 	endfunction
 	
-	virtual reg8_if vif;
-	uvm_analysis_port #(reg8_item) mon_analysis_port;
+	virtual register_if vif;
+	uvm_analysis_port #(register_item) mon_analysis_port;
 	
 	virtual function void build_phase(uvm_phase phase);
 		super.build_phase(phase);
-		if (!uvm_config_db#(virtual reg8_if)::get(this, "", "reg8_vif", vif))
+		if (!uvm_config_db#(virtual register_if)::get(this, "", "reg8_vif", vif))
 			`uvm_fatal("Monitor", "No interface.")
 		mon_analysis_port = new("mon_analysis_port", this);
 	endfunction
@@ -110,11 +123,17 @@ class monitor extends uvm_monitor;
 		super.run_phase(phase);
 		@(posedge vif.clk);
 		forever begin
-			reg8_item item = reg8_item::type_id::create("item");
+			register_item item = register_item::type_id::create("item");
 			@(posedge vif.clk);
+			item.cl = vif.cl;
 			item.ld = vif.ld;
-			item.inc = vif.inc;
 			item.in = vif.in;
+			item.inc = vif.inc;
+			item.dec = vif.dec;
+			item.sr = vif.sr;
+			item.ir = vif.ir;
+			item.sl = vif.sl;
+			item.il = vif.il;
 			item.out = vif.out;
 			`uvm_info("Monitor", $sformatf("%s", item.my_print()), UVM_LOW)
 			mon_analysis_port.write(item);
@@ -134,13 +153,13 @@ class agent extends uvm_agent;
 	
 	driver d0;
 	monitor m0;
-	uvm_sequencer #(reg8_item) s0;
+	uvm_sequencer #(register_item) s0;
 	
 	virtual function void build_phase(uvm_phase phase);
 		super.build_phase(phase);
 		d0 = driver::type_id::create("d0", this);
 		m0 = monitor::type_id::create("m0", this);
-		s0 = uvm_sequencer#(reg8_item)::type_id::create("s0", this);
+		s0 = uvm_sequencer#(register_item)::type_id::create("s0", this);
 	endfunction
 	
 	virtual function void connect_phase(uvm_phase phase);
@@ -159,25 +178,33 @@ class scoreboard extends uvm_scoreboard;
 		super.new(name, parent);
 	endfunction
 	
-	uvm_analysis_imp #(reg8_item, scoreboard) mon_analysis_imp;
+	uvm_analysis_imp #(register_item, scoreboard) mon_analysis_imp;
 	
 	virtual function void build_phase(uvm_phase phase);
 		super.build_phase(phase);
 		mon_analysis_imp = new("mon_analysis_imp", this);
 	endfunction
 	
-	bit [7:0] reg8 = 8'h00;
+	bit [3:0] register = 4'h00;
 	
-	virtual function write(reg8_item item);
-		if (reg8 == item.out)
+	virtual function write(register_item item);
+		if (register == item.out)
 			`uvm_info("Scoreboard", $sformatf("PASS!"), UVM_LOW)
 		else
-			`uvm_error("Scoreboard", $sformatf("FAIL! expected = %8b, got = %8b", reg8, item.out))
+			`uvm_error("Scoreboard", $sformatf("FAIL! expected = %4b, got = %4b", register, item.out))
 		
-		if (item.ld)
-			reg8 = item.in;
-		else if (item.inc)
-			reg8 = reg8 + 8'h01;
+		if (item.cl)
+			register = 0;
+		else if (item.ld)
+			register = item.in;
+		else if(item.inc)
+			register = register + 1;
+		else if(item.dec)
+			register = register - 1;
+		else if(item.sr)
+			register = {item.sr, register[3:1]};
+		else if(item.sl)
+			register = {register[2:0], item.il};
 	endfunction
 	
 endclass
@@ -216,14 +243,14 @@ class test extends uvm_test;
 		super.new(name, parent);
 	endfunction
 	
-	virtual reg8_if vif;
+	virtual register_if vif;
 
 	env e0;
 	generator g0;
 	
 	virtual function void build_phase(uvm_phase phase);
 		super.build_phase(phase);
-		if (!uvm_config_db#(virtual reg8_if)::get(this, "", "reg8_vif", vif))
+		if (!uvm_config_db#(virtual register_if)::get(this, "", "reg8_vif", vif))
 			`uvm_fatal("Test", "No interface.")
 		e0 = env::type_id::create("e0", this);
 		g0 = generator::type_id::create("g0");
@@ -246,33 +273,41 @@ class test extends uvm_test;
 endclass
 
 // Interface
-interface reg8_if (
+interface register_if (
 	input bit clk
 );
 
 	logic rst_n;
-	logic ld;
-    logic inc;
-    logic [7:0] in;
-    logic [7:0] out;
+	logic cl, ld;
+    logic [3:0] in;
+    logic inc, dec;
+	logic sr, ir;
+	logic sl, il;
+    logic [3:0] out;
 
 endinterface
 
 // Testbench
-module testbench_uvm;
+module top;
 
 	reg clk;
 	
-	reg8_if dut_if (
+	register_if dut_if (
 		.clk(clk)
 	);
 	
-	reg8 dut (
+	register dut (
 		.clk(clk),
 		.rst_n(dut_if.rst_n),
+		.cl(dut_if.cl),
 		.ld(dut_if.ld),
-		.inc(dut_if.inc),
 		.in(dut_if.in),
+		.inc(dut_if.inc),
+		.dec(dut_if.dec),
+		.sr(dut_if.sr),
+		.ir(dut_if.ir),
+		.sl(dut_if.sl),
+		.il(dut_if.il),
 		.out(dut_if.out)
 	);
 
@@ -284,7 +319,7 @@ module testbench_uvm;
 	end
 
 	initial begin
-		uvm_config_db#(virtual reg8_if)::set(null, "*", "reg8_vif", dut_if);
+		uvm_config_db#(virtual register_if)::set(null, "*", "reg8_vif", dut_if);
 		run_test("test");
 	end
 

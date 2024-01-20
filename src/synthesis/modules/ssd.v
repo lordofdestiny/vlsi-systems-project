@@ -16,7 +16,7 @@ module ssd (
             4'd6:    out_reg = ~7'h7D;
             4'd7:    out_reg = ~7'h07;
             4'd8:    out_reg = ~7'h7F;
-            4'd9:    out_reg = ~7'h4F;
+            4'd9:    out_reg = ~7'h6F;
             default: out_reg = ~7'b0; 
         endcase
     end

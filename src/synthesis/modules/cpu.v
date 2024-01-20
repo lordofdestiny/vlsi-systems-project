@@ -227,17 +227,8 @@ module cpu
     );
     
     /* OUTPUT REGISTER */
-    reg out_cl, out_ld;
-    reg [DATA_WIDTH-1:0] out_in;
-    register #(DATA_WIDTH) out_reg(
-        .clk(clk), .rst_n(rst_n),
-        .cl(out_cl),
-        .ld(out_ld), .in(out_in),
-        .out(out),
-        .inc(), .dec(),
-        .sr(), .ir(),
-        .sl(), .il()
-    );
+    reg [DATA_WIDTH-1:0] out_next, out_reg;
+    assign out = out_reg;
         
 
     /* INSTRUCTION DECODING */
@@ -293,8 +284,10 @@ module cpu
     always @(posedge clk, negedge rst_n) begin
         if(!rst_n) begin
             state_reg <= state_init;
+            out_reg <= 0;
         end else begin
             state_reg <= state_next;
+            out_reg <= out_next;
         end
     end
 
@@ -333,9 +326,7 @@ module cpu
         op3_addr_ld = 0;
 
         /* OUTPUT REGISTER*/
-        out_cl = 0;
-        out_ld = 0;
-        out_in = mem_data;
+        out_next = out_reg;
 
         case (state_reg)
             /* INITIALIZATION STATES*/
@@ -350,8 +341,6 @@ module cpu
                 ir_cl = 1'b1;
                 // Reset acc to 0
                 acc_cl = 1'b1;
-                // Clear output register
-                out_cl = 1'b1;
                 // Go to the next state
                 state_next = state_reg + 1;
             end
@@ -640,7 +629,7 @@ module cpu
                 state_next = state_reg + 1;
             end
             state_exec_out_4: begin
-                out_ld = 1;
+                out_next = mem_data;
                 state_next = state_exec_done;
             end
             state_exec_done: state_next = state_read_high_ir_1;

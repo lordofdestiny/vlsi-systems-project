@@ -4,7 +4,7 @@ module alu
 ) (
     input [2:0] oc,
     input [DATA_WIDTH-1:0] a, b,
-    output [DATA_WIDTH-1:0] f
+    output reg [DATA_WIDTH-1:0] f
 );
     localparam [2:0] ADD    = 3'b000;
     localparam [2:0] SUB    = 3'b001;
@@ -15,19 +15,16 @@ module alu
     localparam [2:0] OR     = 3'b110;
     localparam [2:0] AND    = 3'b111;
 
-    reg [DATA_WIDTH-1:0] result;
-    assign f = result;
-
     always @(*) begin
         case (oc)
-            ADD:    result = a + b;
-            SUB:    result = a - b;
-            MUL:    result = a * b;
-            DIV:    result = a / b;
-            NOT:    result = ~a;
-            XOR:    result = a ^ b;
-            OR:     result = a | b;
-            AND:    result = a & b;
+            ADD:    f = a + b;
+            SUB:    f = a - b;
+            MUL:    f = a * b;
+            DIV:    f = a / b;
+            NOT:    f = ~a;
+            XOR:    f = a ^ b;
+            OR:     f = a | b;
+            AND:    f = a & b;
         endcase
     end
 

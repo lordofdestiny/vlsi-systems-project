@@ -260,13 +260,13 @@ module cpu
     reg [7:0] instruction_state;
     always @(*) begin
         case (ir_opcode)
-            instr_MOV: instruction_state = state_exec_mov;
-            instr_ADD: instruction_state = state_exec_alu_ld_op2_1; 
-            instr_SUB: instruction_state = state_exec_alu_ld_op2_1;
-            instr_MUL: instruction_state = state_exec_alu_ld_op2_1;
-            instr_DIV: instruction_state = state_exec_done; // Ignore instruction and go to next instruction
-            instr_IN: instruction_state = state_exec_in_1;
-            instr_OUT: instruction_state = state_exec_out_1;
+            instr_MOV:  instruction_state = state_exec_mov;
+            instr_ADD:  instruction_state = state_exec_alu_ld_op2_1; 
+            instr_SUB:  instruction_state = state_exec_alu_ld_op2_1;
+            instr_MUL:  instruction_state = state_exec_alu_ld_op2_1;
+            instr_DIV:  instruction_state = state_exec_done; // Ignore instruction and go to next instruction
+            instr_IN:   instruction_state = state_exec_in_1;
+            instr_OUT:  instruction_state = state_exec_out_1;
             instr_STOP: instruction_state = state_exec_stop;
             default: begin
                 $strobe("error (invalid opcode): go to stop state");
@@ -279,10 +279,10 @@ module cpu
     reg [2:0] alu_oc;
     always @(*) begin
         case(ir_opcode)
-            instr_ADD: alu_oc = 3'b000;
-            instr_SUB: alu_oc = 3'b001;
-            instr_MUL: alu_oc = 3'b010;
-            instr_DIV: alu_oc = 3'b011;
+            instr_ADD:  alu_oc = 3'b000;
+            instr_SUB:  alu_oc = 3'b001;
+            instr_MUL:  alu_oc = 3'b010;
+            instr_DIV:  alu_oc = 3'b011;
             default: alu_oc = 3'b000; // Some default is needed
         endcase
     end
@@ -519,8 +519,7 @@ module cpu
                 mar_ld = 1;
                 mar_in = ir_indirect_op2
                     ? op2_addr
-                    : ir_op2_addr
-                    ;
+                    : ir_op2_addr;
                 // Go to the next state
                 state_next = state_reg + 1; 
             end
@@ -536,8 +535,7 @@ module cpu
                 mar_ld = 1;
                 mar_in = ir_indirect_op1
                     ? op1_addr
-                    : ir_op1_addr
-                    ;
+                    : ir_op1_addr;
                 // Go to the next state
                 state_next = state_reg + 1;
             end
@@ -550,8 +548,7 @@ module cpu
                 mar_ld = 1;
                 mar_in = ir_indirect_op2
                     ? op2_addr
-                    : ir_op2_addr
-                    ;
+                    : ir_op2_addr;
                 // Go to the next state
                 state_next = state_reg + 1; 
             end
@@ -574,8 +571,7 @@ module cpu
                 mar_ld = 1;
                 mar_in = ir_indirect_op3
                     ? op3_addr
-                    : ir_op3_addr
-                    ;
+                    : ir_op3_addr;
                 // Go to the next state
                 state_next = state_reg + 1;
             end
@@ -597,8 +593,7 @@ module cpu
                 mar_ld = 1;
                 mar_in = ir_indirect_op1
                     ? op1_addr
-                    : ir_op1_addr
-                    ;
+                    : ir_op1_addr;
                 mdr_ld = 1;
                 mdr_in = acc;
                 // Go to the next state
@@ -613,8 +608,7 @@ module cpu
                 mar_ld = 1;
                 mar_in = ir_indirect_op1
                     ? op1_addr
-                    : ir_op1_addr
-                    ;
+                    : ir_op1_addr;
                 mdr_ld = 1;
                 mdr_in = in;
                 // Go to the next state
@@ -628,8 +622,7 @@ module cpu
                 mar_ld = 1;
                 mar_in = ir_indirect_op1
                     ? op1_addr
-                    : ir_op1_addr
-                    ;
+                    : ir_op1_addr;
                 // Go to the next state
                 state_next = state_reg + 1;
             end
@@ -664,8 +657,7 @@ module cpu
                 mar_ld = 1;
                 mar_in = ir_indirect_op1
                     ? op1_addr
-                    : ir_op1_addr
-                    ;
+                    : ir_op1_addr;
                 // Go to the next state
                 state_next = state_reg + 1;
             end
@@ -694,8 +686,7 @@ module cpu
                 mar_ld = 1;
                 mar_in = ir_indirect_op2
                     ? op2_addr
-                    : ir_op2_addr
-                    ;
+                    : ir_op2_addr;
                 // Go to the next state
                 state_next = state_reg + 1;
             end
@@ -720,8 +711,7 @@ module cpu
                 mar_ld = 1;
                 mar_in = ir_indirect_op3
                     ? op3_addr
-                    : ir_op3_addr
-                    ;
+                    : ir_op3_addr;
                 // Go to the next state
                 state_next = state_reg + 1;
             end
